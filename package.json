@@ -1,0 +1,17 @@
+{
+  "name": "root",
+  "private": true,
+  "scripts": {
+    "watch:core": "cd core && npm run watch",
+    "watch:joycon": "cd plugins/joycon && npm run watch",
+    "start:demo": "cd demo && npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^4.1.0",
+    "lerna": "^3.4.3",
+    "np": "^4.0.2",
+    "rimraf": "^2.6.3",
+    "rollup": "^1.1.2",
+    "typescript": "^3.3.3"
+  }
+}

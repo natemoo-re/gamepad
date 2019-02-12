@@ -1,0 +1,64 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558 
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "start",
+            "type": "npm",
+            "script": "start:demo",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                    {
+                        "fileLocation": "absolute",
+                        "owner": "typescript",
+                        "pattern": [
+                            {
+                                "regexp": "\\[tsl\\] ERROR in (.*)?\\((\\d+),(\\d+)\\)",
+                                "file": 1,
+                                "line": 2,
+                                "column": 3
+                            },
+                            {
+                                "regexp": "\\s*TS\\d+:\\s*(.*)",
+                                "message": 1
+                            }
+                        ],
+                        "severity": "error",
+                        "source": "ts",
+                        "background": {
+                            "activeOnStart": true,
+                            "beginsPattern": {
+                                "regexp": "ERROR"
+                            },
+                            "endsPattern": {
+                                "regexp": "Server running at .*"
+                            }
+                        }
+                    }
+            ],
+            "isBackground": true
+        },
+        {
+            "label": "watch:core",
+            "type": "npm",
+            "script": "watch:core",
+            "problemMatcher": [
+                "$tsc-watch"
+            ],
+            "isBackground": true
+        },
+        {
+            "label": "watch:joycon",
+            "type": "npm",
+            "script": "watch:joycon",
+            "problemMatcher": [
+                "$tsc-watch"
+            ],
+            "isBackground": true
+        }
+    ]
+}

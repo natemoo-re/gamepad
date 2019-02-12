@@ -1,0 +1,29 @@
+{
+  "name": "@gamepad/core",
+  "version": "0.0.0",
+  "description": "> TODO: description",
+  "author": "Nate Moore <nate@natemoo.re> (http://projects.natemoo.re/)",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prebuild": "../node_modules/.bin/rimraf ./dist",
+    "build": "../node_modules/.bin/tsc && npm run rollup",
+    "watch": "../node_modules/.bin/tsc --watch",
+    "rollup": "../node_modules/.bin/rollup -c",
+    "version": "npm run build",
+    "release": "../node_modules/.bin/np"
+  },
+  "devDependencies": {
+    "@types/lodash.isequal": "^4.5.3",
+    "lodash.merge": "^4.6.1"
+  },
+  "dependencies": {
+    "@types/lodash.merge": "^4.6.4",
+    "fast-memoize": "^2.5.1",
+    "lodash.isequal": "^4.5.0"
+  }
+}
