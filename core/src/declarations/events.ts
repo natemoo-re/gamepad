@@ -6,6 +6,9 @@ export interface EventOptions {
 
 export interface GamepadButtonEventDetails {
 
+    /**
+     * The gamepad which owns this button
+     */
     gamepad: Readonly<Gamepad>;
 
     /**
@@ -22,6 +25,9 @@ export interface GamepadButtonEventDetails {
      **/
     code: string;
 
+    /**
+     * The original index of the button pressed.
+     */
     index: number;
 }
 
