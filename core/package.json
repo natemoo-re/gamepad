@@ -1,10 +1,17 @@
 {
   "name": "@gamepad/core",
-  "version": "0.0.0",
-  "description": "> TODO: description",
-  "author": "Nate Moore <nate@natemoo.re> (http://projects.natemoo.re/)",
+  "version": "0.1.0",
+  "description": "Provides a simple, event-based API for Gamepads on the web",
+  "author": "Nate Moore",
+  "keywords": [
+    "gamepad",
+    "controller",
+    "joypad",
+    "joystick"
+  ],
   "main": "dist/index.cjs.js",
   "module": "dist/index.js",
+  "unpkg": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
@@ -19,10 +26,10 @@
   },
   "devDependencies": {
     "@types/lodash.isequal": "^4.5.3",
-    "lodash.merge": "^4.6.1"
+    "@types/lodash.merge": "^4.6.4"
   },
   "dependencies": {
-    "@types/lodash.merge": "^4.6.4",
+    "lodash.merge": "^4.6.1",
     "fast-memoize": "^2.5.1",
     "lodash.isequal": "^4.5.0"
   }

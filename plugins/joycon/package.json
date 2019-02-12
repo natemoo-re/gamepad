@@ -1,8 +1,15 @@
 {
     "name": "@gamepad/plugin-joycon",
-    "version": "0.0.0",
-    "description": "> TODO: description",
-    "author": "Nate Moore <nate@natemoo.re> (http://projects.natemoo.re/)",
+    "version": "0.1.0",
+    "description": "Joy-Con plugin for Gamepad",
+    "author": "Nate Moore",
+    "keywords": [
+        "nintendo",
+        "switch",
+        "joycon",
+        "joy-con",
+        "gamepad"
+    ],
     "main": "dist/index.cjs.js",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -17,7 +24,7 @@
         "version": "npm run build",
         "release": "../../node_modules/.bin/np"
     },
-    "dependencies": {
+    "devDependencies": {
         "@gamepad/core": "^0.0.0"
     }
 }
