@@ -1,6 +1,6 @@
 {
   "name": "@gamepad/core",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Provides a simple, event-based API for Gamepads on the web",
   "author": "Nate Moore",
   "keywords": [
