@@ -107,9 +107,9 @@ export class GamepadEventEmitter {
                         let transformed = plugins[0].button({ ...button, index }, { gamepad: context });
 
                         if (button.pressed) {
-                            Events.buttondown.emit({ ...transformed, index, gamepad: current });
+                            Events.buttondown.emit({ ...transformed, index, gamepad: current } as any);
                         } else {
-                            Events.buttonup.emit({ ...transformed, index, gamepad: current });
+                            Events.buttonup.emit({ ...transformed, index, gamepad: current } as any);
                         }
                     }
                 })
@@ -122,7 +122,7 @@ export class GamepadEventEmitter {
                         let transformed: any = axis;
                         for (let plugin of plugins) {
                             if (typeof plugin.axis === 'function') {
-                                transformed = plugin.axis(transformed, { gamepad: context, index });
+                                transformed = plugin.axis({ ...transformed, index }, { gamepad: context });
                             }
                         }
 
@@ -140,7 +140,7 @@ export class GamepadEventEmitter {
                 if (button.pressed) {
                     let transformed: any = button;
                     for (let plugin of plugins) {
-                        transformed = plugin.button(transformed, { gamepad: context, index });
+                        transformed = plugin.button({ ...transformed, index }, { gamepad: context });
                     }
                     Events.buttonpress.emit(transformed);
                 }
