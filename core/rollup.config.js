@@ -3,12 +3,7 @@ import pkg from './package.json';
 
 export default {
     input: 'dist/index.js',
-
-    external: [
-        'path',
-        'node-sass'
-    ],
-
+    external: [ ],
     output: [
         {
             format: 'cjs',
