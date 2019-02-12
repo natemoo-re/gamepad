@@ -25,6 +25,6 @@
         "release": "../../node_modules/.bin/np"
     },
     "devDependencies": {
-        "@gamepad/core": "^0.0.0"
+        "@gamepad/core": "0.1.0"
     }
 }
