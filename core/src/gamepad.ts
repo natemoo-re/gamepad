@@ -3,7 +3,7 @@ import merge from 'lodash.merge';
 // import isEqual from 'lodash.isequal';
 import * as d from './declarations';
 import { memoizePlugin } from './utils';
-import memoize from 'fast-memoize';
+// import memoize from 'fast-memoize';
 import Events from './events';
 
 
@@ -83,13 +83,13 @@ export class GamepadEventEmitter {
 
     freeze = (gamepad: Gamepad) => Object.freeze({ ...merge({}, gamepad), ...{ buttons: gamepad.buttons.map(({ pressed, touched, value }) => ({ pressed, touched, value })), axes: gamepad.axes.map(n => n) } });
 
-    diff = (previous, transformed) => {
-        const buttons: d.GamepadButtonTransform[] = transformed.buttons.filter((button, index) => {
+    diff = (previous: any, transformed: any) => {
+        const buttons: d.GamepadButtonTransform[] = transformed.buttons.filter((button: any, index: number) => {
             const prev = previous.buttons[index];
             if (!prev) return false;
             return (prev.value.value !== button.value.value)
         })
-        const axes: d.GamepadAxisTransform[] = transformed.axes.filter((axis, index) => {
+        const axes: d.GamepadAxisTransform[] = transformed.axes.filter((axis: any, index: number) => {
             const prev = previous.axes[index];
             if (!prev) return false;
             return (prev.x !== axis.x || prev.y !== axis.y);

@@ -52,5 +52,5 @@ export interface GamepadAxisTransform {
 export interface Plugin {
     name?: string;
     enabled?: (gamepad: Gamepad) => boolean;
-    transform?: (context: GamepadContext) => { buttons?: (string|GamepadButtonTransform)[], axes?: GamepadAxisTransform[] };
+    transform?: (context: Gamepad) => { buttons: GamepadButtonTransform[], axes: GamepadAxisTransform[] };
 }
