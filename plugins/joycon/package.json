@@ -1,6 +1,6 @@
 {
     "name": "@gamepad/plugin-joycon",
-    "version": "0.1.1",
+    "version": "0.1.0",
     "description": "Joy-Con plugin for Gamepad",
     "author": "Nate Moore",
     "keywords": [
@@ -25,6 +25,6 @@
         "release": "../../node_modules/.bin/np"
     },
     "devDependencies": {
-        "@gamepad/core": "0.1.0"
+        "@gamepad/core": "0.1.1"
     }
 }
