@@ -1,7 +1,7 @@
 import * as d from './declarations';
 
 export default function joycon(opts: d.PluginOptions = {}): d.Plugin {
-    const { mode = null } = opts;
+    // const { mode = null } = opts;
 
     const buttonMap = ['A', 'X', 'B', 'Y', 'SL', 'SR', '-', '-', 'Minus', 'Plus', 'LStick', 'RStick', 'Home', 'Screenshot', 'Bumper', 'Trigger'];
 
@@ -19,12 +19,12 @@ export default function joycon(opts: d.PluginOptions = {}): d.Plugin {
                 case 1: return { x: 1, y: 1 };
                 case 0: return { x: 1, y: 0 };
             }
-        } else {
-            const [{ value: XL }, { value: XR }, { value: YT }, { value: YB }] = value;
-            const x = (XR * -1) || (XL) || 0;
-            const y = (YT * -1) || (YB) || 0;
-            return { x, y };
         }
+
+        const [{ value: XL }, { value: XR }, { value: YT }, { value: YB }] = value;
+        const x = (XR * -1) || (XL) || 0;
+        const y = (YT * -1) || (YB) || 0;
+        return { x, y };
     }
 
     const sides: Map<string, string> = new Map();
@@ -64,14 +64,14 @@ export default function joycon(opts: d.PluginOptions = {}): d.Plugin {
             let axes: d.GamepadAxisTransform[];
 
             if (mapping === 'chrome') {
-                buttons = context.buttons.map((value, index) => {
+                buttons = context.buttons.map((value: GamepadButton, index: number) => {
                     const code = buttonMap[index];
                     const button = getButton(code, side);
                     return { button, code, value };
                 });
                 axes = [{ ...getAxisValue(context.axes[9]), axis: `${side}Stick` }];
             } else if (mapping === 'firefox') {
-                buttons = context.buttons.slice(0, 16).map((value, index) => {
+                buttons = context.buttons.slice(0, 16).map((value: GamepadButton, index: number) => {
                     const code = buttonMap[index];
                     const button = getButton(code, side);
                     return { button, code, value };
