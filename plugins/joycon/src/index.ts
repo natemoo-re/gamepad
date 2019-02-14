@@ -1,8 +1,6 @@
 import * as d from './declarations';
 
-export default function joycon(opts: d.PluginOptions = {}): d.Plugin {
-    // const { mode = null } = opts;
-
+export default function joycon(_opts: d.PluginOptions = {}): d.Plugin {
     const buttonMap = ['A', 'X', 'B', 'Y', 'SL', 'SR', '-', '-', 'Minus', 'Plus', 'LStick', 'RStick', 'Home', 'Screenshot', 'Bumper', 'Trigger'];
 
     const getAxisValue = (value: number | GamepadButton[]) => {
@@ -21,7 +19,7 @@ export default function joycon(opts: d.PluginOptions = {}): d.Plugin {
             }
         }
 
-        const [{ value: XL }, { value: XR }, { value: YT }, { value: YB }] = value;
+        const [{ value: XL }, { value: XR }, { value: YT }, { value: YB }] = value as GamepadButton[];
         const x = (XR * -1) || (XL) || 0;
         const y = (YT * -1) || (YB) || 0;
         return { x, y };
@@ -56,11 +54,11 @@ export default function joycon(opts: d.PluginOptions = {}): d.Plugin {
     return {
         name: 'joycon',
         enabled: (gamepad: Gamepad) => (gamepad.id.indexOf('Joy-Con') > -1),
-        transform: (context) => {
+        transform: (context: Gamepad) => {
             const mapping: 'chrome' | 'firefox' = (context.buttons.length === 20) ? 'firefox' : 'chrome';
             const side = getSide(context.id);
 
-            let buttons: string[];
+            let buttons: d.GamepadButtonTransform[];
             let axes: d.GamepadAxisTransform[];
 
             if (mapping === 'chrome') {
