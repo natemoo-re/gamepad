@@ -1,119 +1,86 @@
 import * as d from './declarations';
 
-const sides: Map<string, string> = new Map();
-const getSide = (id: string) => {
-    let side = sides.get(id);
-    if (!side) {
-        side = id.charAt(9).toUpperCase();
-        sides.set(id, side)
-    }
-    return side;
-}
-
-const getButton = (code: string, side: string) => {
-    switch (code) {
-        case 'Trigger': return `Z${side}`;
-        case 'Bumper': return side;
-        case 'A': return (side === 'L') ? 'ArrowLeft' : code;
-        case 'X': return (side === 'L') ? 'ArrowDown' : code;
-        case 'B': return (side === 'L') ? 'ArrowUp' : code;
-        case 'Y': return (side === 'L') ? 'ArrowRight' : code;
-        default: return code;
-    }
-}
-
 export default function joycon(opts: d.PluginOptions = {}): d.Plugin {
     const { mode = null } = opts;
-    console.log(mode);
 
     const buttonMap = ['A', 'X', 'B', 'Y', 'SL', 'SR', '-', '-', 'Minus', 'Plus', 'LStick', 'RStick', 'Home', 'Screenshot', 'Bumper', 'Trigger'];
+
+    const getAxisValue = (value: number | GamepadButton[]) => {
+        if (!Array.isArray(value)) {
+            value = Math.round(value / (2 / 7) + 3.5) as number;
+            switch (value) {
+                case 8: return { x: 0, y: 0 };
+                case 7: return { x: 1, y: -1 };
+                case 6: return { x: 0, y: -1 };
+                case 5: return { x: -1, y: -1 };
+                case 4: return { x: -1, y: 0 };
+                case 3: return { x: -1, y: 1 };
+                case 2: return { x: 0, y: 1 };
+                case 1: return { x: 1, y: 1 };
+                case 0: return { x: 1, y: 0 };
+            }
+        } else {
+            const [{ value: XL }, { value: XR }, { value: YT }, { value: YB }] = value;
+            const x = (XR * -1) || (XL) || 0;
+            const y = (YT * -1) || (YB) || 0;
+            return { x, y };
+        }
+    }
+
+    const sides: Map<string, string> = new Map();
+    const getSide = (id: string) => {
+        let side = sides.get(id);
+        if (!side) {
+            side = id[id.indexOf('Joy-Con') + 9].toUpperCase();
+            if (['L', 'R'].includes(side)) {
+                sides.set(id, side);
+            } else {
+                sides.set(id, null);
+            }
+        }
+        return side;
+    }
+
+    const getButton = (code: string, side: string) => {
+        switch (code) {
+            case 'Trigger': return `Z${side}`;
+            case 'Bumper': return side;
+            case 'A': return (side === 'L') ? 'ArrowLeft' : code;
+            case 'X': return (side === 'L') ? 'ArrowDown' : code;
+            case 'B': return (side === 'L') ? 'ArrowUp' : code;
+            case 'Y': return (side === 'L') ? 'ArrowRight' : code;
+            default: return code;
+        }
+    }
 
     return {
         name: 'joycon',
         enabled: (gamepad: Gamepad) => (gamepad.id.indexOf('Joy-Con') > -1),
-        button: (state, context) => {
-            const { gamepad } = context;
-            const { index } = state;
-            
-            const side = getSide(gamepad.id);
-            const code = buttonMap[index];
-            let button = getButton(code, side);
+        transform: (context) => {
+            const mapping: 'chrome' | 'firefox' = (context.buttons.length === 20) ? 'firefox' : 'chrome';
+            const side = getSide(context.id);
 
-            return { code, button };
-        },
-        axis: (value, context) => {
-            console.log(context);
-            const index = 9;
-            
-            let state: { x: number, y: number } | number = value;
-            if (index === 9) {
-                value = Math.round(value / (2 / 7) + 3.5);
-                switch (value) {
-                    case 8: 
-                        state = { x: 0, y: 0 };
-                        break;
-                    case 7: 
-                        state = { x: 1, y: -1 };
-                        break;
-                    case 6: 
-                        state = { x: 0, y: -1 };
-                        break;
-                    case 5: 
-                        state = { x: -1, y: -1 };
-                        break;
-                    case 4: 
-                        state = { x: -1, y: 0 };
-                        break;
-                    case 3: 
-                        state = { x: -1, y: 1 };
-                        break;
-                    case 2: 
-                        state = { x: 0, y: 1 };
-                        break;
-                    case 1: 
-                        state = { x: 1, y: 1 };
-                        break;
-                    case 0: 
-                        state = { x: 1, y: 0 };
-                        break;
-                }
+            let buttons: string[];
+            let axes: d.GamepadAxisTransform[];
+
+            if (mapping === 'chrome') {
+                buttons = context.buttons.map((value, index) => {
+                    const code = buttonMap[index];
+                    const button = getButton(code, side);
+                    return { button, code, value };
+                });
+                axes = [{ ...getAxisValue(context.axes[9]), axis: `${side}Stick` }];
+            } else if (mapping === 'firefox') {
+                buttons = context.buttons.slice(0, 16).map((value, index) => {
+                    const code = buttonMap[index];
+                    const button = getButton(code, side);
+                    return { button, code, value };
+                });
+                axes = [{ ...getAxisValue(context.buttons.slice(-4)), axis: `${side}Stick` }];
             }
-            return { state, axis: 'left' };
+            
+            return { buttons, axes };
         }
-        // mapping: (gamepad: Gamepad) => {
-        //     // buttons[0]	Bottom button in right cluster
-        //     // buttons[1]	Right button in right cluster
-        //     // buttons[2]	Left button in right cluster
-        //     // buttons[3]	Top button in right cluster
-        //     // buttons[4]	Top left front button
-        //     // buttons[5]	Top right front button
-        //     // buttons[6]	Bottom left front button
-        //     // buttons[7]	Bottom right front button
-        //     // buttons[8]	Left button in center cluster
-        //     // buttons[9]	Right button in center cluster
-        //     // buttons[10]	Left stick pressed button
-        //     // buttons[11]	Right stick pressed button
-        //     // buttons[12]	Top button in left cluster
-        //     // buttons[13]	Bottom button in left cluster
-        //     // buttons[14]	Right button in left cluster
-        //     // buttons[15]	Left button in left cluster
-
-        //     // axes[0]	Horizontal axis for left stick (negative left/positive right)
-        //     // axes[1]	Vertical axis for left stick (negative up/positive down)
-        //     // axes[2]	Horizontal axis for right stick (negative left/positive right)
-        //     // axes[3]	Vertical axis for right stick (negative up/positive down)
-        // },
-        // transform: (gamepad: Gamepad): d.PluginTransformResults => {
-        //     if (gamepad.id.indexOf('Joy-Con') === -1) return;
-
-        //     const side = gamepad.id.charAt(9);
-        //     const buttons = gamepad.buttons.map((b, index) => ({ ...b, key: buttonMap[index] }));
-
-        //     return {
-        //         ...gamepad,
-        //         buttons
-        //     }
-        // }
     }
 }
 

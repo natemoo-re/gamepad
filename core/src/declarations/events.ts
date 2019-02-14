@@ -29,6 +29,8 @@ export interface GamepadButtonEventDetails {
      * The original index of the button pressed.
      */
     index: number;
+    
+    value: GamepadButton;
 }
 
 export type GamepadButtonEvent = CustomEvent<GamepadButtonEventDetails>;

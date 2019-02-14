@@ -1,8 +1,9 @@
 // import { EventEmitter } from './events';
 import merge from 'lodash.merge';
-import isEqual from 'lodash.isequal';
+// import isEqual from 'lodash.isequal';
 import * as d from './declarations';
 import { memoizePlugin } from './utils';
+import memoize from 'fast-memoize';
 import Events from './events';
 
 
@@ -11,7 +12,7 @@ export class GamepadEventEmitter {
     private rafId: number;
 
     private plugins: d.Plugin[] = [];
-    private enabledPlugins: Map<string, d.Plugin[]> = new Map();
+    private enabledPlugins: Map<string, d.Plugin> = new Map();
     private connected: string[] = [];
 
     private context = new Map<string, d.GamepadContext>();
@@ -25,7 +26,7 @@ export class GamepadEventEmitter {
         window.addEventListener('gamepaddisconnected', this.onGamepadDisconnected);
     }
 
-    public destroy() {
+    public unsubscribe() {
         window.removeEventListener('gamepadconnected', this.onGamepadConnected);
         window.removeEventListener('gamepaddisconnected', this.onGamepadDisconnected);
     }
@@ -37,7 +38,9 @@ export class GamepadEventEmitter {
                 hand: gamepad.hand,
                 id: gamepad.id,
                 index: gamepad.index,
-                mapping: gamepad.mapping
+                mapping: gamepad.mapping,
+                buttons: [],
+                axes: []
             };
             this.context.set(gamepad.id, context);
         }
@@ -50,6 +53,8 @@ export class GamepadEventEmitter {
 
         this.connected.push(gamepad.id);
         this.setEnabledPlugins(gamepad);
+        
+        this.previous.set(gamepad.id, { timestamp: -1, buttons: [], axes: [] });
 
         if (typeof this.rafId === 'undefined') {
             this.rafId = requestAnimationFrame(() => this.run());
@@ -67,85 +72,61 @@ export class GamepadEventEmitter {
 
     private setEnabledPlugins(gamepad: Gamepad) {
         for (let plugin of this.plugins) {
-            if (typeof plugin.enabled === 'function') {
+            if (typeof plugin.enabled === 'function' && !this.enabledPlugins.has(gamepad.id)) {
                 const enabled = plugin.enabled(gamepad) || false;
                 if (enabled) {
-                    const existing = this.enabledPlugins.get(gamepad.id) || [];
-                    this.enabledPlugins.set(gamepad.id, [...existing, plugin]);
+                    this.enabledPlugins.set(gamepad.id, plugin);
                 }
             }
         }
     }
 
-    // private prevTimestamp: number[] = [];
-    // private prevState: Gamepad[] = [];
-    // private map = new Map<number, Gamepad>();
-    private previousTimestamp: Map<string, number> = new Map();
-    private previousButtons: Map<string, Readonly<GamepadButton>[]> = new Map();
-    private previousAxes: Map<string, number[]> = new Map();
+    freeze = (gamepad: Gamepad) => Object.freeze({ ...merge({}, gamepad), ...{ buttons: gamepad.buttons.map(({ pressed, touched, value }) => ({ pressed, touched, value })), axes: gamepad.axes.map(n => n) } });
 
-    private handleGamepadState(gamepad: Gamepad) {
-        const current = Object.freeze(merge({}, gamepad));
-        const context = this.context.get(gamepad.id);
-        const { id, timestamp } = current;
+    diff = (previous, transformed) => {
+        const buttons: d.GamepadButtonTransform[] = transformed.buttons.filter((button, index) => {
+            const prev = previous.buttons[index];
+            if (!prev) return false;
+            return (prev.value.value !== button.value.value)
+        })
+        const axes: d.GamepadAxisTransform[] = transformed.axes.filter((axis, index) => {
+            const prev = previous.axes[index];
+            if (!prev) return false;
+            return (prev.x !== axis.x || prev.y !== axis.y);
+        })
 
-        const plugins = this.enabledPlugins.get(id) || [];
+        return { buttons, axes }
+    }
 
-        const previous = {
-            buttons: this.previousButtons.get(id),
-            axes: this.previousAxes.get(id)
-        }
+    private previous: Map<string, { timestamp: number, buttons: d.GamepadButtonTransform[], axes: d.GamepadAxisTransform[] }> = new Map();
 
-        const buttons = current.buttons.map(b => Object.freeze(merge({}, b)));
-        const axes = [...current.axes];
+    private handleGamepadState(state: Gamepad) {
+        const id = state.id;
 
-        if (this.previousTimestamp.get(id) !== timestamp) {
-            if (previous.buttons) {
-                buttons.forEach((button, index) => {
-                    const prev = previous.buttons[index];
-                    if (!isEqual(prev, button)) {
-                        let transformed = plugins[0].button({ ...button, index }, { gamepad: context });
+        const current = this.freeze(state);
+        const previous = this.previous.get(id);
+        
+        if (previous.timestamp !== current.timestamp) {
+            const plugin = this.enabledPlugins.get(id);
+            const transformed: { buttons: d.GamepadButtonTransform[], axes: d.GamepadAxisTransform[] } = plugin.transform(current);
+            const diff = this.diff(previous, transformed);
 
-                        if (button.pressed) {
-                            Events.buttondown.emit({ ...transformed, index, gamepad: current } as any);
-                        } else {
-                            Events.buttonup.emit({ ...transformed, index, gamepad: current } as any);
-                        }
-                    }
-                })
-            }
-
-            if (previous.axes) {
-                axes.forEach((axis, index) => {
-                    const prev = previous.axes[index];
-                    if (!isEqual(prev, axis)) {
-                        let transformed: any = axis;
-                        for (let plugin of plugins) {
-                            if (typeof plugin.axis === 'function') {
-                                transformed = plugin.axis({ ...transformed, index }, { gamepad: context });
-                            }
-                        }
-
-                        console.log('axischange', transformed);
-                        Events.axischange.emit(transformed);
-                    }
-                })
-            }
-
-            this.previousTimestamp.set(id, timestamp);
-            this.previousButtons.set(id, buttons);
-            this.previousAxes.set(id, axes);
-        } else {
-            previous.buttons.forEach((button, index) => {
-                if (button.pressed) {
-                    let transformed: any = button;
-                    for (let plugin of plugins) {
-                        transformed = plugin.button({ ...transformed, index }, { gamepad: context });
-                    }
-                    Events.buttonpress.emit(transformed);
+            for (const button of diff.buttons) {
+                const prev = previous.buttons.find(b => b.button === button.button && b.code === button.code);
+                if (!prev.value.pressed && button.value.pressed) {
+                    Events.buttondown.emit({ ...button, gamepad: current } as any);
+                } else if (prev.value.pressed && !button.value.pressed) {
+                    Events.buttonup.emit({ ...button, gamepad: current } as any);
                 }
-            })
-            // console.log(previous.buttons[0], buttons[0]);
+            }
+            for (const axis of diff.axes) {
+                Events.axischange.emit({ ...axis, gamepad: current } as any);
+            }
+            
+
+            const { timestamp } = current;
+            const { buttons, axes } = transformed;
+            this.previous.set(id, { timestamp, buttons, axes });
         }
     }
 
@@ -154,47 +135,14 @@ export class GamepadEventEmitter {
             cancelAnimationFrame(this.rafId);
             return;
         };
+        
         const gamepads = navigator.getGamepads();
 
         for (const gamepad of Object.values(gamepads).filter(x => x)) {
             this.handleGamepadState(gamepad);
         }
 
-        // if (prevState) {
-        //     if (prevState[0].buttons[0].pressed) {
-        //         console.log('keydown');
-        //         console.log('keypress');
-        //         if (state[0].buttons[0].pressed) {
-        //             console.log('keyup');
-        //         }
-        //     }
-        // }
-
         this.rafId = requestAnimationFrame(() => this.run());
-        // for (let connected of this.connected) {
-        //     // const previous = prevState.find(gamepad => gamepad.id === connected.originalId);
-        //     // const current = state.find(gamepad => gamepad.id === connected.originalId);
-
-        //     if (previous) {
-        //         for (let [i, button] of Object.entries(current.buttons)) {
-        //             const index = Number.parseInt(i);
-        //             const previousButton = previous.buttons[index];
-
-        //             if (index === 0) {
-        //                 console.log(button, previousButton);
-        //                 if (button.pressed) {
-        //                     return;
-        //                 }
-        //             }
-
-        //             // if (button.value !== previousButton.value) {
-        //             //     console.log('Different!', index);
-        //             // }
-        //         }
-        //     }
-        //     // const gamepad = gamepads.find(g => g.id === connected.originalId);
-        //     // console.log(connected);
-        // }
     }
 
 }

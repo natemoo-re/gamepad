@@ -1,5 +1,22 @@
 import * as d from './declarations';
 
+// 'a',
+// 'b',
+// 'x',
+// 'y',
+// 'leftTop',
+// 'rightTop',
+// 'leftTrigger',
+// 'rightTrigger',
+// 'select',
+// 'start',
+// 'leftStick',
+// 'rightStick',
+// 'dpadUp',
+// 'dpadDown',
+// 'dpadLeft',
+// 'dpadRight'
+
 export default function standard(opts?: d.PluginOptions) {
     const buttonMap = ['a', 'x', 'b', 'y', 'sl', 'sr', '-', '-', 'minus', 'plus', 'lstick', 'rstick', 'home', 'screenshot', 'bumper', 'trigger'];
 
